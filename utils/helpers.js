@@ -1,3 +1,6 @@
+const fs = require('fs');
+const path = require('path');
+
 const { validationResult } = require('express-validator');
 
 exports.handleAsyncError = (err, next) => {
@@ -17,4 +20,9 @@ exports.throwErrorIfInvalid = req => {
     error.errors = errors.array();
     throw error;
   }
+};
+
+exports.clearImage = filePath => {
+  filePath = path.join(__dirname, '..', filePath);
+  fs.unlink(filePath, err => console.log(err));
 };
