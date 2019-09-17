@@ -5,6 +5,7 @@ const {
   handleAsyncError,
   clearImage
 } = require('../utils/helpers');
+const io = require('../socket');
 
 exports.getPosts = async (req, res, next) => {
   const currentPage = req.query.page || 1;
@@ -14,6 +15,7 @@ exports.getPosts = async (req, res, next) => {
     const totalItems = await Post.find().countDocuments();
     const posts = await Post.find()
       .populate('creator')
+      .sort({ createdAt: -1 })
       .skip((currentPage - 1) * pageSize)
       .limit(pageSize);
 
@@ -47,10 +49,20 @@ exports.postPosts = async (req, res, next) => {
 
   try {
     await post.save();
-
     const user = await User.findById(req.userId);
     user.posts.push(post);
     await user.save();
+
+    io.getIO().emit('posts', {
+      action: 'create',
+      post: {
+        ...post._doc,
+        creator: {
+          _id: user._id,
+          name: user.name
+        }
+      }
+    });
 
     res.status(201).json({
       message: 'Post created successfully!',
@@ -99,7 +111,7 @@ exports.putPost = async (req, res, next) => {
   }
 
   try {
-    let post = await Post.findById(postId);
+    let post = await Post.findById(postId).populate('creator');
 
     if (!post) {
       const error = new Error('Could not find post.');
@@ -107,7 +119,7 @@ exports.putPost = async (req, res, next) => {
       throw error;
     }
 
-    if (post.creator.toString() !== req.userId) {
+    if (post.creator._id.toString() !== req.userId) {
       const error = new Error('Not authorized.');
       error.statusCode = 403;
       throw error;
@@ -121,6 +133,11 @@ exports.putPost = async (req, res, next) => {
     post.content = content;
     post.imageUrl = imageUrl;
     post = await post.save();
+
+    io.getIO().emit('posts', {
+      action: 'update',
+      post: post
+    });
 
     res.status(200).json({ post: post });
   } catch (err) {
@@ -153,6 +170,11 @@ exports.deletePost = async (req, res, next) => {
 
     user.posts.pull(postId);
     await user.save();
+
+    io.getIO().emit('posts', {
+      action: 'delete',
+      post: postId
+    });
 
     res.status(200).json({ message: 'Deleted message' });
   } catch (err) {
