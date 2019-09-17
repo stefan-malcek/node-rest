@@ -4,7 +4,7 @@ const path = require('path');
 const { validationResult } = require('express-validator');
 
 exports.handleAsyncError = (err, next) => {
-  if (!err.sttatusCode) {
+  if (!err.statusCode) {
     err.statusCode = 500;
   }
   next(err);
