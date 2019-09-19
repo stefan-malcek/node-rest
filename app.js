@@ -14,10 +14,10 @@ const graphqlResolver = require('./graphql/resolvers');
 const app = express();
 
 const storage = multer.diskStorage({
-  destination: function(req, file, cb) {
+  destination: function (req, file, cb) {
     cb(null, 'images');
   },
-  filename: function(req, file, cb) {
+  filename: function (req, file, cb) {
     cb(null, uuidv4() + '.jpg');
   }
 });
@@ -45,6 +45,10 @@ app.use((req, res, next) => {
     'OPTIONS, GET, POST, PUT, PATCH, DELETE'
   );
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+
   next();
 });
 
@@ -81,6 +85,7 @@ app.use((err, req, res, next) => {
 mongoose
   .connect(config.MONGO_DB)
   .then(result => {
+    console.log('connected')
     app.listen(8080);
   })
   .catch(err => console.log(err));
