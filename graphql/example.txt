@@ -1,0 +1,9 @@
+query {
+  hello
+}
+
+mutation {
+  createUser(userInput: {email: "emaial@email.com", name: "Had", password: "email"}) {
+    _id, name, email
+  }
+}

@@ -8,6 +8,9 @@ const config = require('../config');
 const { clearImage } = require('../utils/helpers');
 
 module.exports = {
+  hello: function ({ name }) {
+    return `Hello ${name || 'World'}!`;
+  },
   createUser: async function ({ userInput: { email, name, password } }, req) {
     const errors = [];
     if (!validator.isEmail(email)) {
@@ -38,7 +41,7 @@ module.exports = {
     const user = new User({
       email: email,
       name: name,
-      password: hashedPw
+      password: hashedPw,
     });
 
     const createdUser = await user.save();
@@ -59,18 +62,24 @@ module.exports = {
       throw error;
     }
 
-    const token = jwt.sign({
-      userId: user._id.toString(),
-      email: user.email
-    }, config.jwtSecret,
-      { expiresIn: '1h' });
+    const token = jwt.sign(
+      {
+        userId: user._id.toString(),
+        email: user.email,
+      },
+      config.jwtSecret,
+      { expiresIn: '1h' }
+    );
 
     return {
       token: token,
-      userId: user._id.toString()
-    }
+      userId: user._id.toString(),
+    };
   },
-  createPost: async function ({ postInput: { title, content, imageUrl } }, req) {
+  createPost: async function (
+    { postInput: { title, content, imageUrl } },
+    req
+  ) {
     if (!req.isAuth) {
       const error = new Error('Not authenticated.');
       error.code = 401;
@@ -82,7 +91,10 @@ module.exports = {
       errors.push({ message: 'Title is invalid.' });
     }
 
-    if (validator.isEmpty(content) || !validator.isLength(content, { min: 5 })) {
+    if (
+      validator.isEmpty(content) ||
+      !validator.isLength(content, { min: 5 })
+    ) {
       errors.push({ message: 'Content is invalid.' });
     }
 
@@ -104,19 +116,19 @@ module.exports = {
       title: title,
       content: content,
       imageUrl: imageUrl,
-      creator: user
+      creator: user,
     });
     const createdPost = await post.save();
     user.posts.push(createdPost);
     await user.save();
 
-    console.log(createdPost)
+    console.log(createdPost);
 
     return {
       ...createdPost._doc,
       _id: createdPost._id.toString(),
       createdAt: createdPost.createdAt.toISOString(),
-      updatedAt: createdPost.updatedAt.toISOString()
+      updatedAt: createdPost.updatedAt.toISOString(),
     };
   },
   posts: async function ({ page }, req) {
@@ -140,12 +152,13 @@ module.exports = {
 
     return {
       totalPosts: totalPosts,
-      posts: posts.map(p => ({
-        ...p._doc, _id: p._id.toString(),
+      posts: posts.map((p) => ({
+        ...p._doc,
+        _id: p._id.toString(),
         createdAt: p.createdAt.toISOString(),
-        updatedAt: p.updatedAt.toISOString()
-      }))
-    }
+        updatedAt: p.updatedAt.toISOString(),
+      })),
+    };
   },
   post: async function ({ id }, req) {
     if (!req.isAuth) {
@@ -162,10 +175,11 @@ module.exports = {
     }
 
     return {
-      ...post._doc, _id: post._id.toString(),
+      ...post._doc,
+      _id: post._id.toString(),
       createdAt: post.createdAt.toISOString(),
-      updatedAt: post.updatedAt.toISOString()
-    }
+      updatedAt: post.updatedAt.toISOString(),
+    };
   },
   updatePost: async function ({ id, postInput }, req) {
     if (!req.isAuth) {
@@ -188,11 +202,17 @@ module.exports = {
     }
 
     const errors = [];
-    if (validator.isEmpty(postInput.title) || !validator.isLength(postInput.title, { min: 5 })) {
+    if (
+      validator.isEmpty(postInput.title) ||
+      !validator.isLength(postInput.title, { min: 5 })
+    ) {
       errors.push({ message: 'Title is invalid.' });
     }
 
-    if (validator.isEmpty(postInput.content) || !validator.isLength(postInput.content, { min: 5 })) {
+    if (
+      validator.isEmpty(postInput.content) ||
+      !validator.isLength(postInput.content, { min: 5 })
+    ) {
       errors.push({ message: 'Content is invalid.' });
     }
 
@@ -206,15 +226,16 @@ module.exports = {
     post.title = postInput.title;
     post.content = postInput.content;
     if (postInput.imageUrl !== 'undefined') {
-      post.imageUrl = postInput.imageUrl
+      post.imageUrl = postInput.imageUrl;
     }
 
     const updatedPost = await post.save();
     return {
-      ...updatedPost._doc, _id: updatedPost._id.toString(),
+      ...updatedPost._doc,
+      _id: updatedPost._id.toString(),
       createdAt: updatedPost.createdAt.toISOString(),
-      updatedAt: updatedPost.updatedAt.toISOString()
-    }
+      updatedAt: updatedPost.updatedAt.toISOString(),
+    };
   },
   deletePost: async function ({ id }, req) {
     if (!req.isAuth) {
@@ -260,8 +281,8 @@ module.exports = {
 
     return {
       ...user._doc,
-      _id: user._id.toString()
-    }
+      _id: user._id.toString(),
+    };
   },
   updateStatus: async function ({ status }, req) {
     if (!req.isAuth) {
@@ -281,7 +302,7 @@ module.exports = {
     await user.save();
     return {
       ...user._doc,
-      _id: user._id.toString()
-    }
-  }
+      _id: user._id.toString(),
+    };
+  },
 };
